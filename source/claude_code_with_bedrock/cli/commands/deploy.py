@@ -131,6 +131,10 @@ class DeployCommand(Command):
                     console.print("[yellow]Analytics requires monitoring to be enabled in your configuration.[/yellow]")
                     return 1
             elif stack_arg == "quota":
+                if not getattr(profile, "sso_enabled", True):
+                    console.print("[yellow]Quota monitoring requires SSO authentication for JWT validation.[/yellow]")
+                    console.print("Enable SSO by running: [cyan]ccwb init[/cyan]")
+                    return 1
                 if profile.monitoring_enabled:
                     if getattr(profile, "quota_monitoring_enabled", False):
                         stacks_to_deploy.append(("quota", "Quota Monitoring (Per-User Token Limits)"))
@@ -185,9 +189,14 @@ class DeployCommand(Command):
                 # Check if analytics is enabled (default to True for backward compatibility)
                 if getattr(profile, "analytics_enabled", True):
                     stacks_to_deploy.append(("analytics", "Analytics Pipeline (Kinesis Firehose + Athena)"))
-                # Check if quota monitoring is enabled
+                # Check if quota monitoring is enabled (requires SSO for JWT authentication)
                 if getattr(profile, "quota_monitoring_enabled", False):
-                    stacks_to_deploy.append(("quota", "Quota Monitoring (Per-User Token Limits)"))
+                    if getattr(profile, "sso_enabled", True):
+                        stacks_to_deploy.append(("quota", "Quota Monitoring (Per-User Token Limits)"))
+                    else:
+                        console.print(
+                            "[yellow]Skipping quota monitoring: requires SSO authentication for JWT validation[/yellow]"
+                        )
             # Check if CodeBuild is enabled
             if getattr(profile, "enable_codebuild", False):
                 stacks_to_deploy.append(("codebuild", "CodeBuild for Windows binary builds"))
