@@ -490,9 +490,7 @@ Resources:
   # ECS Service
   ECSService:
     Type: AWS::ECS::Service
-    DependsOn:
-      - HTTPListener
-      - HTTPSListener
+    DependsOn: HTTPListener
     Properties:
       ServiceName: otel-collector-service
       Cluster: !Ref ECSCluster
